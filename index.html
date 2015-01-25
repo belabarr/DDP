@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>CSV Quick Plot</title>
+  <meta charset="utf-8">
+  <meta name="description" content="CSV Quick Plot">
+  <meta name="author" content="Bel Abarrientos">
+  <meta name="generator" content="slidify" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta http-equiv="X-UA-Compatible" content="chrome=1">
+  <link rel="stylesheet" href="../../librariesNew/frameworks/io2012/css/default.css" media="all" >
+  <link rel="stylesheet" href="../../librariesNew/frameworks/io2012/css/phone.css" 
+    media="only screen and (max-device-width: 480px)" >
+  <link rel="stylesheet" href="../../librariesNew/frameworks/io2012/css/slidify.css" >
+  <link rel="stylesheet" href="../../librariesNew/highlighters/highlight.js/css/tomorrow.css" />
+  <base target="_blank"> <!-- This amazingness opens all links in a new tab. -->  
+  
+  <!-- Grab CDN jQuery, fall back to local if offline -->
+  <script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.7.min.js"></script>
+  <script>window.jQuery || document.write('<script src="../../librariesNew/widgets/quiz/js/jquery.js"><\/script>')</script> 
+  <script data-main="../../librariesNew/frameworks/io2012/js/slides" 
+    src="../../librariesNew/frameworks/io2012/js/require-1.0.8.min.js">
+  </script>
+  
+  
+
+</head>
+<body style="opacity: 0">
+  <slides class="layout-widescreen">
+    
+    <!-- LOGO SLIDE -->
+        <slide class="title-slide segue nobackground">
+  <hgroup class="auto-fadein">
+    <h1>CSV Quick Plot</h1>
+    <h2>Data Products</h2>
+    <p>Bel Abarrientos<br/>Coursera Subject - Developing Data Product</p>
+  </hgroup>
+  <article></article>  
+</slide>
+    
+
+    <!-- SLIDES -->
+    <slide class="" id="slide-1" style="background:;">
+  <hgroup>
+    <h2>What is CSV Quick Plot?</h2>
+  </hgroup>
+  <article data-timings="">
+    <ul>
+<li>CSV Quick Plot provides exploratory plotting for a data file.</li>
+<li>Histogram and Scatterplot is initially thought of but other plots like correlation, boxplots and others can be considered</li>
+<li>The tool uses Shiny</li>
+<li>Due to limited time, full functionality is limited currently, additional functionalities will be added progressively</li>
+<li>Functional widgets are provided for demonstration for now.</li>
+</ul>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-2" style="background:;">
+  <hgroup>
+    <h2>Entry Fields</h2>
+  </hgroup>
+  <article data-timings="">
+    <h3>Input File</h3>
+
+<ul>
+<li>Text Input file is currently considered, user has to enter file path and file name</li>
+<li>Select file input function could be used instead (using file system dialog)</li>
+<li>Once file is selected, data will be loaded </li>
+</ul>
+
+<h3>Plot Type Selection</h3>
+
+<ul>
+<li>Drop-down list is provided, Scatter and histogram is currently listed</li>
+<li>Based on selection, plot will be rendered upon submit</li>
+</ul>
+
+<h3>Date Selection</h3>
+
+<ul>
+<li>Date is provided but no immediate For now use for now</li>
+<li>Date range could be used for data selection</li>
+</ul>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-3" style="background:;">
+  <article data-timings="">
+    <p><img src="CSVQuickplot.png" alt="CSVQuickplot" title="CSV Quick Plot Tool"></p>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-4" style="background:;">
+  <hgroup>
+    <h2>ui.R</h2>
+  </hgroup>
+  <article data-timings="">
+    <pre><code>library(shiny)
+shinyUI(pageWithSidebar(
+    headerPanel(&quot;CSV Quick Plot&quot;),
+    sidebarPanel(
+        textInput(&#39;fileName&#39;, &#39;Enter file name to load:&#39;, &#39;&#39;),
+        selectInput(&quot;plotType&quot;, label = &quot;Select Plot Type&quot;,
+             c(&quot;Histogram&quot; = &quot;hist&quot;,
+               &quot;Scatter&quot; = &quot;scatter&quot;)),
+                dateInput(&quot;date&quot;, &quot;Date:&quot;),  
+        submitButton(&quot;Submit&quot;)
+    ),
+    mainPanel(
+        h3(&#39;Output Information&#39;),
+        h4(&#39;File entered&#39;),
+        verbatimTextOutput(&quot;ofileName&quot;),
+        h4(&#39;You selected plot type&#39;),
+        verbatimTextOutput(&quot;oplotType&quot;),
+        h4(&#39;You entered&#39;),
+        verbatimTextOutput(&quot;odate&quot;),
+        plotOutput(&#39;newHist&#39;)
+    )
+))
+</code></pre>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-5" style="background:;">
+  <hgroup>
+    <h2>server.R</h2>
+  </hgroup>
+  <article data-timings="">
+    <pre><code>library(UsingR)
+library(shiny)
+
+shinyServer(
+    function(input, output) {
+     infile &lt;- reactive({input$fileName})
+
+     if (is.null(infile)) {
+         return(NULL)
+         }
+
+    # plotdata &lt;- read.csv(infile)
+    # defaulting to pollution file for now just to ensure thru-and-thru dialog
+    plotdata &lt;- read.csv(&#39;avgpm25.csv&#39;)
+
+    output$ofileName &lt;- renderPrint({input$fileName})
+    output$oplotType &lt;- renderPrint({input$plotType})
+    output$odate &lt;- renderPrint({input$date})
+
+    output$newHist &lt;- renderPlot({hist(plotdata)})
+
+#   plotType &lt;- reactive({input$plotType})
+#   if (plotType == &quot;hist&quot;) {
+#     output$newHist &lt;- renderPlot({hist(plotdata)})
+#    }
+#   if (plotType == &quot;scatter&quot;) {
+#     output$newHist &lt;- renderPlot({with(plotdata, plot(latitude, pm25, col = region))
+#                                       abline(h = 12, lwd = 2, lty = 2)
+#                                       })
+#    }
+    }
+)
+</code></pre>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+    <slide class="backdrop"></slide>
+  </slides>
+  <div class="pagination pagination-small" id='io2012-ptoc' style="display:none;">
+    <ul>
+      <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=1 title='What is CSV Quick Plot?'>
+         1
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=2 title='Entry Fields'>
+         2
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=3 title=''>
+         3
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=4 title='ui.R'>
+         4
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=5 title='server.R'>
+         5
+      </a>
+    </li>
+  </ul>
+  </div>  <!--[if IE]>
+    <script 
+      src="http://ajax.googleapis.com/ajax/libs/chrome-frame/1/CFInstall.min.js">  
+    </script>
+    <script>CFInstall.check({mode: 'overlay'});</script>
+  <![endif]-->
+</body>
+  <!-- Load Javascripts for Widgets -->
+  
+  <!-- MathJax: Fall back to local if CDN offline but local image fonts are not supported (saves >100MB) -->
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        inlineMath: [['$','$'], ['\\(','\\)']],
+        processEscapes: true
+      }
+    });
+  </script>
+  <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/2.0-latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+  <!-- <script src="https://c328740.ssl.cf1.rackcdn.com/mathjax/2.0-latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+  </script> -->
+  <script>window.MathJax || document.write('<script type="text/x-mathjax-config">MathJax.Hub.Config({"HTML-CSS":{imageFont:null}});<\/script><script src="../../librariesNew/widgets/mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML"><\/script>')
+</script>
+<!-- LOAD HIGHLIGHTER JS FILES -->
+  <script src="../../librariesNew/highlighters/highlight.js/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <!-- DONE LOADING HIGHLIGHTER JS FILES -->
+   
+  </html>
