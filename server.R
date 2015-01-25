@@ -5,35 +5,32 @@
 
 library(UsingR)
 library(shiny)
+library(Hmisc)
+library(corrplot)
+wd <- getwd()
+setwd(wd)
 
 shinyServer(
     function(input, output) {
-     #cat("filename1\n")
-     infile <- reactive({input$fileName})
-     #cat("filename2\n")
-     
-     if (is.null(infile)) {
-         return(NULL)
-         }
-     #cat("filename3\n") 
-    # plotdata <- read.csv(infile)
-    # defaulting to pollution file for now just to ensure thru-and-thru dialog
-    plotdata <- read.csv('avgpm25.csv')
-        
-    output$ofileName <- renderPrint({input$fileName})
-    output$oplotType <- renderPrint({input$plotType})
-    output$odate <- renderPrint({input$date})
+         
+    output$ofile        <- renderPrint({input$infile})
+    output$oplotType    <- renderPrint({input$plotType})
+    output$odate        <- renderPrint({input$date})
     
-    output$newHist <- renderPlot({hist(plotdata)})
+    plotdata <- reactive({
+        filestr <- input$infile
+        read.csv(filestr$name)
+            })
+            
+    output$newHist <- renderPlot({
+        hist(plotdata())
+    })
     
-#   plotType <- reactive({input$plotType})
-#   if (plotType == "hist") {
-#     output$newHist <- renderPlot({hist(plotdata)})
-#    }
-#   if (plotType == "scatter") {
-#     output$newHist <- renderPlot({with(plotdata, plot(latitude, pm25, col = region))
-#                                       abline(h = 12, lwd = 2, lty = 2)
-#                                       })
-#    }
+#   Conditional plot selection is test in progress
+#     corrdf <- cor(plotdata)
+#     output$newHist <- renderPlot({
+#         corrplot(corrdf, method = "circle")
+#     })
+    
     }
 )

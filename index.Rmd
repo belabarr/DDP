@@ -1,7 +1,7 @@
 ---
 title       : CSV Quick Plot 
 subtitle    : Data Products
-author      : Bel Abarrientos
+author      : beldevere
 job         : Coursera Subject - Developing Data Product
 logo        : 
 framework   : io2012        # {io2012, html5slides, shower, dzslides, ...}
@@ -17,7 +17,7 @@ mode        : selfcontained # {standalone, draft}
 ## What is CSV Quick Plot?
 
 - CSV Quick Plot provides exploratory plotting for a data file.
-- Histogram and Scatterplot is initially thought of but other plots like correlation, boxplots and others can be considered
+- Histogram and Correlation plot is initially thought of but other plots like scatter, boxplots and others can be considered
 - The tool uses Shiny
 - Due to limited time, full functionality is limited currently, additional functionalities will be added progressively
 - Functional widgets are provided for demonstration for now.
@@ -25,12 +25,11 @@ mode        : selfcontained # {standalone, draft}
 ---
 ## Entry Fields 
 ### Input File 
-- Text Input file is currently considered, user has to enter file path and file name
-- Select file input function could be used instead (using file system dialog)
+- File input dialog is currently provided
 - Once file is selected, data will be loaded 
 
 ### Plot Type Selection
-- Drop-down list is provided, Scatter and histogram is currently listed
+- Drop-down list is provided, histogram and correlation is currently listed
 - Based on selection, plot will be rendered upon submit
 
 ### Date Selection
@@ -48,17 +47,26 @@ library(shiny)
 shinyUI(pageWithSidebar(
     headerPanel("CSV Quick Plot"),
     sidebarPanel(
-        textInput('fileName', 'Enter file name to load:', ''),
+        fileInput('infile', 'Choose file to upload',
+                  accept = c(
+                      'text/csv',
+                      'text/comma-separated-values',
+                      'text/tab-separated-values',
+                      'text/plain',
+                      '.csv',
+                      '.tsv'
+                  )
+        ),
         selectInput("plotType", label = "Select Plot Type",
              c("Histogram" = "hist",
-               "Scatter" = "scatter")),
+               "Correlation" = "corr")),
                 dateInput("date", "Date:"),  
         submitButton("Submit")
     ),
     mainPanel(
         h3('Output Information'),
         h4('File entered'),
-        verbatimTextOutput("ofileName"),
+        verbatimTextOutput("ofile"),
         h4('You selected plot type'),
         verbatimTextOutput("oplotType"),
         h4('You entered'),
@@ -73,34 +81,33 @@ shinyUI(pageWithSidebar(
 ```
 library(UsingR)
 library(shiny)
+library(Hmisc)
+library(corrplot)
+wd <- getwd()
+setwd(wd)
 
 shinyServer(
     function(input, output) {
-     infile <- reactive({input$fileName})
-          
-     if (is.null(infile)) {
-         return(NULL)
-         }
+         
+    output$ofile        <- renderPrint({input$infile})
+    output$oplotType    <- renderPrint({input$plotType})
+    output$odate        <- renderPrint({input$date})
     
-    # plotdata <- read.csv(infile)
-    # defaulting to pollution file for now just to ensure thru-and-thru dialog
-    plotdata <- read.csv('avgpm25.csv')
-        
-    output$ofileName <- renderPrint({input$fileName})
-    output$oplotType <- renderPrint({input$plotType})
-    output$odate <- renderPrint({input$date})
+    plotdata <- reactive({
+        filestr <- input$infile
+        read.csv(filestr$name)
+            })
+            
+    output$newHist <- renderPlot({
+        hist(plotdata())
+    })
     
-    output$newHist <- renderPlot({hist(plotdata)})
+#   Conditional plot selection is test in progress
+#     corrdf <- cor(plotdata)
+#     output$newHist <- renderPlot({
+#         corrplot(corrdf, method = "circle")
+#     })
     
-#   plotType <- reactive({input$plotType})
-#   if (plotType == "hist") {
-#     output$newHist <- renderPlot({hist(plotdata)})
-#    }
-#   if (plotType == "scatter") {
-#     output$newHist <- renderPlot({with(plotdata, plot(latitude, pm25, col = region))
-#                                       abline(h = 12, lwd = 2, lty = 2)
-#                                       })
-#    }
     }
 )
 ```
